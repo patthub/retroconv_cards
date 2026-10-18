@@ -3,37 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Karty katalogowe</title>
+<title>Karty katalogowe – retrokonwersja</title>
+<link rel="stylesheet" href="style.css?v=1">
 <style>
-  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#6b6b66; --line:#ddd9cf; --card:#fff; --acc:#8a3b12; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#171715; --fg:#ecebe6; --muted:#9c9b94; --line:#34332e; --card:#201f1c; --acc:#e59a6b; } }
-  body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; padding:16px; box-sizing:border-box }
-  main { max-width:640px; text-align:center }
-  h1 { font-size:26px; margin:0 0 8px }
-  p { color:var(--muted); margin:0 0 32px }
-  nav { display:flex; gap:16px; justify-content:center; flex-wrap:wrap }
-  nav a { flex:1 1 220px; display:block; padding:24px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); text-decoration:none }
-  nav a:hover { border-color:var(--acc) }
-  nav b { display:block; font-size:20px; color:var(--acc) }
-  nav span { color:var(--muted); font-size:14px }
-  .extra { margin-top:24px; font-size:14px } .extra a { color:var(--acc) }
+  .collections { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .collections .card-img { aspect-ratio: 3 / 2; padding: 6%; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Karty katalogowe → baza danych</h1>
-  <p>Skany kart katalogowych i rekordy wyekstrahowane z nich otwartymi modelami (NuExtract3).</p>
-  <nav>
-    <a href="karty.html?z=polona"><b>Polona</b><span id="n-polona">karty z Centralnego Katalogu BN</span></a>
-    <a href="karty.html?z=ibpp"><b>IBPP</b><span id="n-ibpp">karty IBPP</span></a>
-  </nav>
-  <div class="extra"><a href="pokaz.html">Od karty do rekordu – przykład krok po kroku →</a></div>
+<header class="site-header"><div class="wrap">
+  <a href="./" class="wordmark">Karty katalogowe<br>→ baza danych</a>
+  <nav class="site-nav"><a href="./" aria-current="page">Kolekcje</a><a href="pokaz.html">Od karty do rekordu</a></nav>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <p class="label">Retrokonwersja</p>
+  <h1>Karty katalogowe → baza danych<span>.</span></h1>
+  <div class="hero-meta">
+    <p>Skany kart katalogowych (rękopiśmiennych, maszynowych i drukowanych) i rekordy bibliograficzne wyekstrahowane z nich otwartymi modelami (NuExtract3, dotrenowanym na kartach z Polony).</p>
+  </div>
+</div></section>
+
+<main class="wrap">
+  <ul class="grid collections">
+    <li class="card"><a href="karty.html?z=polona">
+      <div class="card-img"><img src="images/61973918_62055975.jpg" alt=""><span class="badge">Polona</span></div>
+      <h3>Centralny Katalog Biblioteki Narodowej</h3>
+      <p class="meta">Druki obce XVI–XVIII wieku, karty z serwisu Polona</p>
+      <p class="sig" id="n-polona"></p>
+    </a></li>
+    <li class="card"><a href="karty.html?z=ibpp">
+      <div class="card-img"><img src="images/IMG_1274.jpg" alt=""><span class="badge">IBPP</span></div>
+      <h3>Instytut Biblioteka Polska w Paryżu</h3>
+      <p class="meta">Karty z katalogu IBPP, fotografowane telefonem</p>
+      <p class="sig" id="n-ibpp"></p>
+    </a></li>
+  </ul>
 </main>
+
+<footer class="site-footer">
+  <div class="wrap footer-top">
+    <div><strong>Karty katalogowe → baza danych</strong>Uniwersytet Warszawski</div>
+    <ul><li><a href="karty.html?z=polona">Polona</a></li><li><a href="karty.html?z=ibpp">IBPP</a></li><li><a href="cards.json">Pobierz dane (JSON)</a></li></ul>
+    <p>Wersja pilotażowa. Rekordy wygenerowane automatycznie, bez weryfikacji przez bibliotekarza.</p>
+  </div>
+</footer>
 <script>
-fetch('cards.json').then(r => r.json()).then(d => ['polona', 'ibpp'].forEach(z => {
-  const n = d.filter(c => c.source === z).length;
-  document.getElementById('n-' + z).textContent += ` · ${n} ${n === 1 ? 'karta' : 'kart'}`;
-}));
+const kart = n => `${n} ${n === 1 ? 'karta' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'karty' : 'kart'}`;
+fetch('cards.json').then(r => r.json()).then(d => ['polona', 'ibpp'].forEach(z =>
+  document.getElementById('n-' + z).textContent = kart(d.filter(c => c.source === z).length)));
 </script>
 </body>
 </html>
