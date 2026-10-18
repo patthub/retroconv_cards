@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karty katalogowe Polona</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#6b6b66; --line:#ddd9cf; --card:#fff; --acc:#8a3b12; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#171715; --fg:#ecebe6; --muted:#9c9b94; --line:#34332e; --card:#201f1c; --acc:#e59a6b; } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui, sans-serif }
+  header { padding:16px; border-bottom:1px solid var(--line); display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+  h1 { font-size:18px; margin:0 }
+  input, select { font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg) }
+  input { flex:1; min-width:200px }
+  #count { color:var(--muted) }
+  main { display:grid; grid-template-columns:320px 1fr; height:calc(100vh - 70px) }
+  #list { overflow:auto; border-right:1px solid var(--line); margin:0; padding:0; list-style:none }
+  #list li { padding:8px 16px; border-bottom:1px solid var(--line); cursor:pointer }
+  #list li:hover, #list li.on { background:var(--card) }
+  #list li.on { border-left:3px solid var(--acc) }
+  #list small { color:var(--muted); display:block }
+  #view { overflow:auto; padding:16px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-content:start }
+  #view img { width:100%; border:1px solid var(--line); border-radius:4px }
+  table { border-collapse:collapse; width:100% }
+  td, th { text-align:left; vertical-align:top; padding:4px 8px; border-bottom:1px solid var(--line) }
+  th { color:var(--muted); font-weight:500; white-space:nowrap }
+  .note { color:var(--muted); font-size:13px; margin-top:12px }
+  a { color:var(--acc) }
+  @media (max-width: 800px) {
+    main { grid-template-columns:1fr; height:auto }
+    #list { max-height:40vh; border-right:0; border-bottom:1px solid var(--line) }
+    #view { grid-template-columns:1fr }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Karty katalogowe Polona → baza</h1>
+  <input id="q" type="search" placeholder="Szukaj (hasło, tytuł, miejsce, sygnatura…)">
+  <select id="script"><option value="">każde pismo</option><option>typewritten</option><option>handwritten</option><option>printed</option><option>mixed</option></select>
+  <span id="count"></span>
+</header>
+<main>
+  <ul id="list"></ul>
+  <section id="view"></section>
+</main>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = v => v == null || (Array.isArray(v) && !v.length) ? '' :
+  Array.isArray(v) ? v.map(fmt).join('<br>') :
+  typeof v === 'object' ? Object.entries(v).filter(([, x]) => x != null).map(([k, x]) => `<i>${esc(k)}</i>: ${esc(x)}`).join('; ') : esc(v);
+let cards = [], shown = [];
+
+function render() {
+  const q = document.getElementById('q').value.toLowerCase(), s = document.getElementById('script').value;
+  shown = cards.filter(c => (!s || c.label.script === s) && (!q || JSON.stringify(c.label).toLowerCase().includes(q)));
+  document.getElementById('count').textContent = `${shown.length} / ${cards.length}`;
+  document.getElementById('list').innerHTML = shown.map((c, i) =>
+    `<li data-i="${i}">${esc(c.label.heading || '—')}<small>${esc((c.label.title || '').slice(0, 70))}</small></li>`).join('');
+  if (shown.length) show(0);
+}
+
+function show(i) {
+  const c = shown[i];
+  document.querySelectorAll('#list li').forEach(li => li.classList.toggle('on', +li.dataset.i === i));
+  const rows = Object.entries(c.label).map(([k, v]) => fmt(v) && `<tr><th>${esc(k)}</th><td>${fmt(v)}</td></tr>`).join('');
+  document.getElementById('view').innerHTML = `
+    <div><img src="images/${encodeURI(c.file)}" alt="Skan karty ${esc(c.file)}" loading="lazy">
+      <div class="note">${esc(c.drawer || '')}${c.polona ? ` · <a href="${esc(c.polona)}" target="_blank" rel="noopener">oryginał w Polonie</a>` : ''}</div></div>
+    <div><table>${rows}</table>${c.comment ? `<p class="note">Uwagi: ${esc(c.comment)}</p>` : ''}</div>`;
+}
+
+document.getElementById('list').onclick = e => { const li = e.target.closest('li'); if (li) show(+li.dataset.i); };
+document.getElementById('q').oninput = render;
+document.getElementById('script').onchange = render;
+fetch('cards.json').then(r => r.json()).then(d => { cards = d; render(); });
+</script>
+</body>
+</html>
